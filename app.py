@@ -3,12 +3,12 @@ Asistente ISO 9001 | RAG + Agente
 python app.py → http://localhost:7860
 """
 import gradio as gr
-from config import GOOGLE_API_KEY, SERVER_HOST, SERVER_PORT, GEMINI_MODEL
+from config import OPENAI_API_KEY as API_KEY, SERVER_HOST, SERVER_PORT, OPENAI_MODEL as MODEL
 from rag import fragment_count
 from agent import run_agent
 
-if not GOOGLE_API_KEY:
-    print("Error: Falta GOOGLE_API_KEY")
+if not API_KEY:
+    print("Error: Falta OPENAI_API_KEY")
     exit(1)
 
 def chat(message, history):
@@ -70,5 +70,5 @@ with gr.Blocks(theme=theme, css=custom_css, fill_height=True) as demo:
 
 if __name__ == "__main__":
     print(f"\nIniciando servidor en http://localhost:{SERVER_PORT}")
-    print(f"Modelo: {GEMINI_MODEL} | Fragmentos: {fragment_count}\n")
+    print(f"Modelo: {MODEL} | Fragmentos: {fragment_count}\n")
     demo.launch(server_name=SERVER_HOST, server_port=SERVER_PORT, share=False)

@@ -1,13 +1,13 @@
 # Taller: RAG + IA Moderna + Mini Chatbot
 
-**Asistente ISO 9001** -- Chatbot que busca en la norma ISO 9001 usando RAG (Retrieval-Augmented Generation) con Google Gemini.
+**Asistente ISO 9001** -- Chatbot que busca en la norma ISO 9001 usando RAG (Retrieval-Augmented Generation) con OpenAI GPT-4o-mini.
 
 ## Que demuestra este taller
 
 | Concepto | Implementacion |
 |---|---|
 | **RAG** | PDF -> Chunks -> Embeddings -> ChromaDB -> Busqueda vectorial |
-| **IA Moderna** | Google Gemini API, embeddings multilingues, Docker |
+| **IA Moderna** | OpenAI API (GPT-4o-mini), embeddings multilingues, Docker |
 | **Mini Chatbot** | Interfaz web con Gradio, historial de conversacion |
 
 ## Arquitectura
@@ -25,13 +25,13 @@ ChromaDB (busqueda vectorial, milisegundos)
 Fragmentos relevantes de ISO 9001
       |
       v
-Google Gemini (genera respuesta con contexto)
+OpenAI GPT-4o-mini (genera respuesta con contexto)
       |
       v
 Respuesta al usuario con paginas citadas
 ```
 
-**Flujo simple:** Toda pregunta busca en ChromaDB y pasa los fragmentos a Gemini en una sola llamada. Sin pasos intermedios.
+**Flujo simple:** Toda pregunta busca en ChromaDB y pasa los fragmentos a GPT-4o-mini en una sola llamada. Sin pasos intermedios.
 
 ## Estructura del proyecto
 
@@ -56,38 +56,42 @@ taller-rag-agente/
 ## Requisitos previos
 
 - Docker y Docker Compose instalados en WSL/Ubuntu
-- API key de Google Gemini (gratis o pago)
+- API key de OpenAI (requiere creditos, minimo $5 USD)
 
-### Obtener API key de Gemini
+### Obtener API key de OpenAI
 
-1. Ir a https://aistudio.google.com/apikey
-2. Crear API key (no requiere tarjeta en free tier)
-3. Copiar la key
+1. Ir a https://platform.openai.com
+2. Crear cuenta y agregar creditos ($5 minimo)
+3. Ir a API Keys y crear una nueva key
+4. Copiar la key (empieza con sk-...)
 
 ## Instalacion y arranque
 
-### Paso 1: Preparar el proyecto
+### Paso 1: Clonar el repositorio
 
 ```bash
-cd ~/taller-rag-agente
+git clone https://github.com/CristianJsue17/taller-rag-agente.git
+cd taller-rag-agente
+```
 
-# Crear carpeta docs y copiar tu PDF
-mkdir -p docs
-cp /ruta/a/tu/iso9001.pdf docs/
+### Paso 2: Configurar la API key
 
-# Configurar API key
+El archivo .env no esta incluido por seguridad (.gitignore lo excluye). Crear a partir del ejemplo:
+
+```bash
 cp .env.example .env
 nano .env
-# Pegar tu GOOGLE_API_KEY y guardar
 ```
 
 Tu `.env` debe verse asi:
 ```
-GOOGLE_API_KEY=AIzaSy...tu-key-aqui
-GEMINI_MODEL=gemini-3.5-flash
+OPENAI_API_KEY=sk-...tu-key-aqui
+OPENAI_MODEL=gpt-4o-mini
 ```
 
-### Paso 2: Levantar el contenedor (Terminal 1)
+Guardar y cerrar (Ctrl+O, Enter, Ctrl+X en nano).
+
+### Paso 3: Levantar el contenedor (Terminal 1)
 
 ```bash
 docker compose up --build
@@ -97,18 +101,18 @@ Espera hasta ver estos mensajes:
 ```
 rag-chatbot  | Cargando base de conocimiento...
 rag-chatbot  |    0 fragmentos cargados
-rag-chatbot  | Conectando con Gemini (gemini-3.5-flash)...
+rag-chatbot  | Conectando con OpenAI (gpt-4o-mini)...
 rag-chatbot  | Listo
 ```
 
 **No cierres esta terminal.** Deja el contenedor corriendo aqui.
 
-### Paso 3: Ingestar el PDF (Terminal 2)
+### Paso 4: Ingestar el PDF (Terminal 2)
 
-Abre una segunda terminal:
+Abrir una segunda terminal:
 
 ```bash
-cd ~/taller-rag-agente
+cd taller-rag-agente
 docker compose exec app python ingest.py --pdf docs/iso9001.pdf
 ```
 
@@ -128,21 +132,21 @@ Test: 'gestion de calidad'
    1. (pag 13): ...
 ```
 
-### Paso 4: Reiniciar para cargar la base
+### Paso 5: Reiniciar para cargar la base
 
 ```bash
 docker compose restart app
 ```
 
-Vuelve a la Terminal 1 y espera a ver:
+Volver a la Terminal 1 y esperar a ver:
 ```
 rag-chatbot  | XXX fragmentos cargados    <-- ya no dice 0
 rag-chatbot  | Listo
 ```
 
-### Paso 5: Usar el chatbot
+### Paso 6: Usar el chatbot
 
-Abre en tu navegador: **http://localhost:7860**
+Abrir en el navegador: **http://localhost:7860**
 
 ## Comandos utiles
 
@@ -168,8 +172,8 @@ docker compose restart app
 
 | Componente | Tecnologia | Por que |
 |---|---|---|
-| LLM | Google Gemini 3.5 Flash | Rapido, API simple, free tier disponible |
-| Embeddings | paraphrase-multilingual-MiniLM-L12-v2 | Multilingue, entiende espanol |
+| LLM | OpenAI GPT-4o-mini | Rapido (5-10 seg), economico (~$0.15/millon tokens) |
+| Embeddings | paraphrase-multilingual-MiniLM-L12-v2 | Multilingue, entiende espanol, corre local |
 | Vector DB | ChromaDB | En memoria, zero config |
 | Framework | LangChain | Loaders, text splitters, integraciones |
 | Frontend | Gradio | Chatbot funcional en pocas lineas |
@@ -178,45 +182,33 @@ docker compose restart app
 ## Puntos importantes
 
 ### Sobre la velocidad
-- La busqueda en ChromaDB tarda milisegundos. El 95% del tiempo es la llamada a Gemini.
-- Free tier: ~30-40 segundos por respuesta. Con plan pago: ~10-15 segundos.
-- Si ves error 503 (UNAVAILABLE), es demanda alta temporal en Gemini. Espera unos minutos.
-- Si ves error 429 (RESOURCE_EXHAUSTED), llegaste al limite de requests. Espera o cambia de modelo.
+- La busqueda en ChromaDB tarda milisegundos. El tiempo de respuesta depende de la API de OpenAI.
+- GPT-4o-mini responde en 5-10 segundos por consulta.
+- Con $5 de credito se pueden realizar miles de consultas.
 
 ### Sobre la calidad de busqueda
-- El modelo de embeddings `paraphrase-multilingual-MiniLM-L12-v2` entiende espanol.
-- Si una pregunta no encuentra resultados relevantes, prueba reformularla con terminos de la norma.
+- El modelo de embeddings paraphrase-multilingual-MiniLM-L12-v2 entiende espanol correctamente.
+- Si una pregunta no encuentra resultados relevantes, reformular usando terminos de la norma.
 - Los chunks de 500 caracteres dan buen balance entre contexto y velocidad.
 
 ### Sobre el PDF
-- Solo necesitas ingestar una vez. La base persiste en un Docker volume.
-- Si cambias el PDF, re-ingesta y reinicia.
-- Puedes ingestar multiples PDFs ejecutando ingest.py varias veces con diferentes archivos.
+- Solo se necesita ingestar una vez. La base persiste en un Docker volume.
+- Si se cambia el PDF, re-ingestar y reiniciar.
+- Se pueden ingestar multiples PDFs ejecutando ingest.py varias veces con diferentes archivos.
 
 ### Sobre Docker
 - El primer build tarda ~5-10 minutos (descarga dependencias Python).
 - Los siguientes builds son rapidos (cache de Docker).
-- Si cambias requirements.txt, necesitas `--build`. Si solo cambias .env, basta con `restart`.
+- Si se cambia requirements.txt, usar --build. Si solo se cambia .env, basta con restart.
 
 ## Troubleshooting
 
 | Problema | Solucion |
 |---|---|
-| Error 503 UNAVAILABLE | Gemini saturado, espera 1-2 minutos y reintenta |
-| Error 429 RESOURCE_EXHAUSTED | Limite de requests alcanzado, espera o cambia modelo |
-| 0 fragmentos cargados | Ejecuta ingest.py y luego restart |
-| Container se cae al iniciar | Revisa `docker compose logs app` |
-| Respuestas no relevantes | Revisa que el PDF se ingesto bien, prueba re-ingestar |
-| Build falla por DNS | Configura DNS en WSL: nameserver 8.8.8.8 en /etc/resolv.conf |
-
-## Modelos alternativos de Gemini
-
-Si `gemini-3.5-flash` da problemas, cambia en tu `.env`:
-
-```bash
-# Opciones (de mas nuevo a mas estable):
-GEMINI_MODEL=gemini-3.5-flash
-GEMINI_MODEL=gemini-3-flash
-GEMINI_MODEL=gemini-2.5-flash-preview-05-20
-GEMINI_MODEL=gemini-2.5-flash-lite-preview-06-17
-```
+| Error 401 Unauthorized | API key invalida, verificar en platform.openai.com |
+| Error de creditos insuficientes | Agregar creditos en platform.openai.com/billing |
+| 0 fragmentos cargados | Ejecutar ingest.py y luego restart |
+| Container se cae al iniciar | Revisar docker compose logs app |
+| Respuestas no relevantes | Verificar que el PDF se ingesto bien, re-ingestar |
+| Build falla por DNS | Configurar DNS en WSL: nameserver 8.8.8.8 en /etc/resolv.conf |
+| Build falla por timeout | Reintentar, puede ser internet lento |

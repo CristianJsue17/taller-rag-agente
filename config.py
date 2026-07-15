@@ -1,9 +1,8 @@
-"""Configuración centralizada del proyecto."""
-
+"""Configuracion centralizada."""
 import os
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 CHROMA_DIR = os.getenv("CHROMA_DIR", "./chroma_db")
 COLLECTION_NAME = "iso9001"
 EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"

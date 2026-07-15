@@ -6,11 +6,11 @@ services:
     ports:
       - "7860:7860"
     volumes:
-      - chroma_data:/app/chroma_db   # Base vectorial persiste
-      - ./docs:/app/docs             # Monta tus PDFs aquí
+      - chroma_data:/app/chroma_db
+      - ./docs:/app/docs
     environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GEMINI_MODEL=${GEMINI_MODEL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
 
 volumes:
   chroma_data:
